@@ -24,7 +24,7 @@
 direct <- "C:/Users/keyserf/Documents/temp_data/"
 direct_fns <- "C:/Users/keyserf/Documents/Github/Assessment_fns/"
 
-yr <- 2024
+yr <- 2025
 
 # Load the function...
 source(paste(direct_fns,"Survey_and_OSAC/OSAC_summary.r",sep = ""))
@@ -32,25 +32,25 @@ source(paste(direct_fns,"Survey_and_OSAC/OSAC_summary.r",sep = ""))
 # This will take more than 10 minutes when using GBa as it takes a while to do the jackknife for the CPUE on GBa.
 # Note that this will lead to an error if there was no fishing on a bank in a given year so make sure you remove any
 # banks that don't have fishery data for the current year!
-OSAC_summary(direct = direct,direct_fns=direct_fns,un=un.ID,pw=pwd.ID,db.con="ptran",yr=2024,
-             bank ="all",
-             save.fig = F,save.res=F,export=F, calc.mc = T, rdata.logs=F)
+OSAC_summary(direct = direct,direct_fns=direct_fns,un=un.ID,pw=pwd.ID,db.con="ptran",yr=2025,
+             bank = "all",
+             save.fig = T,save.res=F,export=F, calc.mc = F, rdata.logs=F)
 
 OSAC_summary(direct = direct,un=un.ID,pw=pwd.ID,db.con="ptran",yr=2019,
              bank = c("Sab", "Ban"),
-             save.fig = F,save.res=F,export=F, calc.mc = F, rdata.logs=F)
+             save.fig = F,save.res=F,export=F, calc.mc = F, rdta.logs=F)
 
-SPB <- OSAC_summary(direct = direct,direct_fns=direct_fns,un=un.ID,pw=pwd.ID,db.con="ptran",yr=2024,
-             bank = c("SPB"#, "Mid","Sab","Ger","BBn","GBa","GBb","BBs"
+SPB <- OSAC_summary(direct = direct,direct_fns=direct_fns,un=un.ID,pw=pwd.ID,db.con="ptran",yr=2025,
+             bank = c("SPB"#, "Ban", "Mid","Sab","BBn","BBs", "GBa","GBb", "Ger"
                       ),
-             save.fig = T,save.res=F,export=F, calc.mc=T, rdata.logs=F)
+             save.fig = T,save.res=T,export=T, calc.mc=T, rdata.logs=F)
 # Get rid of some clutter...
 rm("fleet_data","new.log.dat","old.log.dat","slip.dat")
 # And the data is all summarized in the OSAC_res object
 fish.res
 meat.count
 
-load(paste(direct,"Data/Fishery_data/Summary/2024/OSAC_summary.RData",sep = ""))
+load(paste(direct,"Data/Fishery_data/Summary/2025/OSAC_summary.RData",sep = ""))
 # object names in OSAC_summary.RData and in OSAC_res (if it's immediately after running): fish.res,surv.res,sum.stat,fish.cells,extreme.catch,high.catch, cpue.ts,mctable
 names(OSAC_res)
 
@@ -59,7 +59,7 @@ surv.res
 sum.stat
 extreme.catch
 high.catch
-cpue.ts
+cpue.dat #(aka cpue.ts)
 meat.count
 
 #mean SH FR is in survey summary script and OSAC_word.RMD

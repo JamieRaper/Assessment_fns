@@ -761,12 +761,13 @@ for(fun in funs)
       # From 1996-current CS= 95, RS = 85
       # This is the Shell height for each shell height category. If it ever changes in the future this will need adjusted.
       # If we are still using this code in 2030 I'll be both old and worried...
+      #browser()
       if(grepl("GB",bnk))
       {
         SH.dat <- data.frame(year = 1980:2030,CS = c(rep(75,6),rep(85,10),rep(95,2030-1995)),RS = c(rep(60,6),rep(75,10),rep(85,2030-1995)))
+        #SH.dat <- expand.grid(year = 1980:2030,CS = 95,RS = 85)
         CS <- SH.dat$CS[SH.dat$year %in% years]
         RS <- SH.dat$RS[SH.dat$year %in% years]
-        browser()
       } # End if(bnk == "GBa")
       
       # Now we can set up our more detailed SHF bins as well
@@ -1092,7 +1093,8 @@ for(fun in funs)
         surv.dat[[bnk]] <- surv.by.tow(surv.dat[[bnk]], years, pre.ht=RS, rec.ht=CS,type = "ALL",mw.par = "CF",user.bins = bin)
         #surv.dat[[bnk]] <- surv.by.tow(surv.dat[[bnk]], years, pre.ht=RS, rec.ht=CS, type='B', mw.par="CFh")
       } # end if(bnk == "Sab" || bnk == "BBs" ) 
-      
+      #meat count from surv.by.tow is TOTAL meat count, not commercial!
+      names(surv.dat[[bnk]])[which(names(surv.dat[[bnk]])=="meat.count")] <- "tot.meat.count"
       print("surv.by.tow done")
       
       # On Georges spring we need to tidy up some of the randoms..
@@ -1137,7 +1139,6 @@ for(fun in funs)
       surv.Clap[[bnk]]$clap.propPre<-surv.Clap[[bnk]]$pre/(surv.Live[[bnk]]$pre+surv.Clap[[bnk]]$pre)*100
       surv.Clap[[bnk]]$clap.propPre[is.na(surv.Clap[[bnk]]$clap.propPre)]<-0
       surv.Clap[[bnk]]$clap.prop[is.na(surv.Clap[[bnk]]$clap.prop)]<-0
-      
       
       # Using the Live scallops only make the Middle Bank survey object
       # Simple survey updated to enable the caluclation for user specified sH bins.
@@ -1421,12 +1422,15 @@ for(fun in funs)
       # For 2024 framework banks we want ALL the tows here.
       if(!bank.4.spatial %in% c("GB", "GBa")) {
         CF.current[[bnk]]<-merge(CF.current[[bnk]],subset(surv.Live[[bnk]],year==yr,c('year','tow','lon','lat',"com","com.bm")))
+        # # exclude tows that weren't actually sampled though!
+        # CF.current[[bnk]] <- CF.current[[bnk]][CF.current[[bnk]]$tow %in% unique(mw.dm$tow),]
       }
       # GBa we only want the 'random' tows
       if(bank.4.spatial %in% c("GB", "GBa")) CF.current[[bnk]]<-merge(CF.current[[bnk]],subset(surv.Rand[[bnk]],year==yr,c('year','tow','lon','lat',"com","com.bm")))
       
       # Meat count per 500g
       CF.current[[bnk]]$meat.count <- 0.5/(CF.current[[bnk]]$com.bm/CF.current[[bnk]]$com)
+      surv.Live[[bnk]]$meat.count <- 0.5/(surv.Live[[bnk]]$com.bm/surv.Live[[bnk]]$com)
       
       # The seedbox calculations		
       # Bring in the seeboxes for the latest year

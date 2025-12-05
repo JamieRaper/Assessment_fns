@@ -196,7 +196,7 @@ survey.figs <- function(plots = 'all', banks = "all" , yr = as.numeric(format(Sy
   
   if(all(plots == 'all')) 
   {
-    plots <- c("PR-spatial","Rec-spatial","FR-spatial","CF-spatial","MC-spatial","Clap-spatial","Survey","MW-SH",
+    plots <- c("PR-spatial","Rec-spatial","FR-spatial","CF-spatial","MC-spatial","Clap-spatial", "Clap-abund-spatial","Survey","MW-SH",
                "abund-ts","biomass-ts","SHF","SHF-large","SHF-split",
                "clapper-abund-ts","clapper-per-ts","SH-MW-CF-ts","breakdown","seedboxes","user.SH.bins",
                "MW-spatial","SH-spatial","MW.GP-spatial","SH.GP-spatial")
@@ -204,7 +204,7 @@ survey.figs <- function(plots = 'all', banks = "all" , yr = as.numeric(format(Sy
   
   if(all(plots == 'spatial')) 
   {
-    plots <- c("PR-spatial","Rec-spatial","FR-spatial","CF-spatial","MC-spatial","Clap-spatial",
+    plots <- c("PR-spatial","Rec-spatial","FR-spatial","CF-spatial","MC-spatial","Clap-spatial", "Clap-abund-spatial",
                "MW-spatial","SH-spatial","MW.GP-spatial","SH.GP-spatial")
   } # end if(plots == 'spatial')
   
@@ -542,7 +542,7 @@ for(fun in funs)
     } # end if(banks[i] %in% c("Sab")) 
     
     # Get the strata areas.  For most areas we use the survey.strata.table which is output from the data function
-    if(banks[i] %in% c("GBa","GBb","BBs",spat.name)) strata.areas <- subset(survey.strata.table[[banks[i]]],select =c("PID","towable_area"))
+    if(banks[i] %in% c("GBa","GBb",spat.name)) strata.areas <- subset(survey.strata.table[[banks[i]]],select =c("PID","towable_area"))
     
     if(banks[i] %in% c("Sab") & !yr < max(survey.info$startyear[survey.info$label=="Sab"])) {
       strata.areas <- subset(survey.info[!(survey.info$startyear==1900 & survey.info$label=="Sab"),], label==banks[i],select =c("PID","towable_area"))}
@@ -553,6 +553,11 @@ for(fun in funs)
       strata.areas <- subset(survey.info[!(survey.info$startyear==1900 & survey.info$label=="BBn"),], label==banks[i],select =c("PID","towable_area"))}
     if(banks[i] %in% c("BBn") & yr < max(survey.info$startyear[survey.info$label=="BBn"])) {
       strata.areas <- subset(survey.info[!(survey.info$startyear==2021 & survey.info$label=="BBn"),], label==banks[i],select =c("PID","towable_area"))}
+    #BBs areas were corrected in 2023
+    if(banks[i] %in% c("BBs") & !yr < max(survey.info$startyear[survey.info$label=="BBs"])) {
+      strata.areas <- subset(survey.info[!(survey.info$startyear==1900 & survey.info$label=="BBs"),], label==banks[i],select =c("PID","towable_area"))}
+    if(banks[i] %in% c("BBs") & yr < max(survey.info$startyear[survey.info$label=="BBs"])) {
+      strata.areas <- subset(survey.info[!(survey.info$startyear==2023 & survey.info$label=="BBs"),], label==banks[i],select =c("PID","towable_area"))}
     if(banks[i] %in% c("GB", "Mid", "Ger", "Ban", "BanIce")) strata.areas <- NULL
     
     #Get all the details of the survey strata
@@ -566,7 +571,12 @@ for(fun in funs)
     if(banks[i] %in% c("BBn") & yr < max(survey.info$startyear[survey.info$label=="BBn"])) {
       surv.info <- survey.info[!(survey.info$startyear==2021) & survey.info$label=="BBn",]}
     
-    if(!banks[i] %in% c("Sab", "BBn")) surv.info <- survey.strata.table[[banks[i]]]
+    if(banks[i] %in% c("BBs") & !yr < max(survey.info$startyear[survey.info$label=="BBs"])) {
+      surv.info <- survey.info[survey.info$startyear==2023 & survey.info$label=="BBs",]}
+    if(banks[i] %in% c("BBs") & yr < max(survey.info$startyear[survey.info$label=="BBs"])) {
+      surv.info <- survey.info[!(survey.info$startyear==2023) & survey.info$label=="BBs",]}
+    
+    if(!banks[i] %in% c("Sab", "BBn", "BBs")) surv.info <- survey.strata.table[[banks[i]]]
     
     ### If we are missing years in the data I want to add those years in as NA's so the plots see those as NA's  ####
     check.year <- min(survey.obj[[banks[i]]][[1]]$year,na.rm=T):max(survey.obj[[banks[i]]][[1]]$year,na.rm=T)
@@ -599,7 +609,7 @@ for(fun in funs)
       subarea_cv <- do.call(rbind,lapply(lapply(survey.obj[c("GBa-North", "GBa-West", "GBa-East", "GBa-Central", "GBa-South")], function(x) x[[1]]),data.frame))
       subarea_df$subarea <- gsub(x=row.names(subarea_df),pattern = "\\..*",replacement="")
       subarea_cv$subarea <- gsub(x=row.names(subarea_cv),pattern = "\\..*",replacement="")
-      subarea_df <- join(subarea_df, subarea_cv[, c("year", "subarea", "N.cv", "NPR.cv", "NR.cv", "I.cv", 'IR.cv', "IPR.cv", "CF")], type="full")
+      subarea_df <- plyr::join(subarea_df, subarea_cv[, c("year", "subarea", "N.cv", "NPR.cv", "NR.cv", "I.cv", 'IR.cv', "IPR.cv", "CF")], type="full")
       
     }
     
@@ -609,7 +619,7 @@ for(fun in funs)
       ts_cv <- do.call(rbind,lapply(lapply(survey.obj[names(survey.obj)[which(names(survey.obj) %in% banklist)]], function(x) x[[1]]),data.frame))
       ts_df$subarea <- gsub(x=row.names(subarea_df),pattern = "\\..*",replacement="")
       ts_cv$subarea <- gsub(x=row.names(subarea_cv),pattern = "\\..*",replacement="")
-      ts_df <- join(ts_df, ts_cv[, c("year", "subarea", "N.cv", "NPR.cv", "NR.cv", "I.cv", 'IR.cv', "IPR.cv", "CF")], type="full")
+      ts_df <- plyr::join(ts_df, ts_cv[, c("year", "subarea", "N.cv", "NPR.cv", "NR.cv", "I.cv", 'IR.cv', "IPR.cv", "CF")], type="full")
     }
     
     ################################# START MAKING FIGURES################################# START MAKING FIGURES################################# 
@@ -698,8 +708,8 @@ for(fun in funs)
         }
         if(banks[i] %in% c("GBa")){
           # The condition and meat count data.
-          loc.cf <- data.frame(lon = c(CF.current[["GBa"]]$lon[CF.current[["GBa"]]$year == yr],CF.current[["GBb"]]$lon[CF.current[["GBb"]]$year == yr]),
-                               lat=c(CF.current[["GBa"]]$lat[CF.current[["GBa"]]$year == yr],CF.current[["GBb"]]$lat[CF.current[["GBb"]]$year == yr]))
+          loc.cf <- unique(data.frame(lon = c(cf.data[["GBa"]]$pred.dat$lon[cf.data[["GBa"]]$pred.dat$year==yr],cf.data[["GBa"]]$pred.dat$lon[cf.data[["GBa"]]$pred.dat$year==yr]),
+                               lat = c(cf.data[["GBa"]]$pred.dat$lat[cf.data[["GBa"]]$pred.dat$year==yr],cf.data[["GBa"]]$pred.dat$lat[cf.data[["GBa"]]$pred.dat$year==yr])))
           # For the growth potential related figures we also need to make a special mesh as there could be some tows with 0 individuals
           # and these may screw up the INLA'ing
           loc.gp <- data.frame(lon = c(pot.grow[["GBa"]]$lon[pot.grow[["GBa"]]$year == yr],pot.grow[["GBb"]]$lon[pot.grow[["GBb"]]$year == yr]),
@@ -880,32 +890,29 @@ for(fun in funs)
             if(banks[i] %in% c("GBb", "GBa")) 
             {
               tmp.dat <- dplyr::full_join(surv.Live[["GBa"]][surv.Live[["GBa"]]$year == yr,],surv.Live[["GBb"]][surv.Live[["GBb"]]$year == yr,])
+              tmp.cf <- tmp.dat
               tmp.clap <- dplyr::full_join(surv.Clap[["GBa"]][surv.Clap[["GBa"]]$year == yr,],surv.Clap[["GBb"]][surv.Clap[["GBb"]]$year == yr,])
+              tmp.gp <- dplyr::full_join(pot.grow[["GBa"]][pot.grow[["GBa"]]$year == yr,], pot.grow[["GBb"]][pot.grow[["GBb"]]$year == yr,])
+              tmp.gp <- dplyr::left_join(tmp.dat[,c("tow", "lon", "lat")], tmp.gp)
             }  # end if(banks[i] %in% c("GBb","GBa")) 
             
-            if(banks[i] %in% c("GBa")) 
-            {
-              tmp.cf <- CF.current[[banks[i]]][CF.current[[banks[i]]]$year == yr,]
-              tmp.gp <- pot.grow[[banks[i]]][pot.grow[[banks[i]]]$year == yr,]
-            } 
-            
-            if(banks[i] %in% c("Mid","Sab","Ger","BBn","BBs","Ban","BanIce","SPB","GB", "GBb")) 
+            if(banks[i] %in% c("Mid","Sab","Ger","BBn","BBs","Ban","BanIce","SPB","GB")) 
             {  
-              if(!banks[i] %in% "GBb") tmp.dat <- surv.Live[[banks[i]]][surv.Live[[banks[i]]]$year == yr,]
+              tmp.dat <- surv.Live[[banks[i]]][surv.Live[[banks[i]]]$year == yr,]
               tmp.cf <-  CF.current[[banks[i]]][CF.current[[banks[i]]]$year == yr,]
-              if(!banks[i] %in% "GBb") tmp.clap <- surv.Clap[[banks[i]]][surv.Clap[[banks[i]]]$year == yr,]
+              tmp.clap <- surv.Clap[[banks[i]]][surv.Clap[[banks[i]]]$year == yr,]
               if(!banks[i] == "BanIce") tmp.gp <- pot.grow[[banks[i]]][pot.grow[[banks[i]]]$year == yr,]
               if(banks[i]=="GB") tmp.gp <- na.omit(pot.grow[[banks[i]]][pot.grow[[banks[i]]]$year == yr,])
             } # end if(banks[i] %in% c("Mid","Sab","Ger","BBn","BBs","Ban","BanIce","SPB","GB")) 
             tmp.dat <- add_utm_columns(tmp.dat, c("lon", "lat"), utm_crs=st_crs(loc.sf))
             tmp.cf <- add_utm_columns(tmp.cf, c("lon", "lat"), utm_crs=st_crs(loc.sf))
             tmp.clap <- add_utm_columns(tmp.clap, c("lon", "lat"), utm_crs=st_crs(loc.sf))
-            tmp.gp <- left_join(tmp.dat[,c("tow", "X","Y")], tmp.gp)
+            tmp.gp <- dplyr::left_join(tmp.dat[,c("tow", "X","Y")], tmp.gp)
             
             if(banks[i] %in% c("Mid", "GB")) {
               tmp.cf <- tmp.dat
             }
-
+            
             # Now loop through each spatial map we want to make.
             fitted <- NULL
             for(k in 1:length(spatial.maps))
@@ -1006,44 +1013,84 @@ for(fun in funs)
               }# end if(spatial.maps[k] %in% c("CF-spatial", "MC-spatial"))  
               # THis seems to be making sense...
               
-              if(spatial.maps[k] == "Clap-spatial")        
+              if(spatial.maps[k] %in% c("Clap-spatial", "Clap-abund-spatial"))        
               {
-                
-                print('Clap-spatial')
-                
-                fitted[[spatial.maps[k]]] <- sdmTMB(
-                  clap.prop/100 ~ 1, 
-                  data = tmp.clap,
-                  family = binomial(link="logit"),
-                  weights = tmp.clap$tot,
-                  mesh = mesh,
-                  spatial = "on")
-                
-                sane <- sanity( fitted[[spatial.maps[k]]])
-                
-                if(sum(unlist(sane))<7) {
-                  fitted[[spatial.maps[k]]] <- sdmTMB(
-                    clap.prop ~ 1, 
+                if(spatial.maps[k] =="Clap-spatial") {
+                  
+                  print('Clap-spatial')
+                  
+                    fitted[[spatial.maps[k]]] <- sdmTMB(
+                    clap.prop/100 ~ 1, 
                     data = tmp.clap,
-                    family = poisson(link="log"),
+                    family = binomial(link="logit"),
+                    weights = tmp.clap$tot,
                     mesh = mesh,
                     spatial = "on")
                   
-                  sane <- sanity(fitted[[spatial.maps[k]]])
+                  sane <- sanity( fitted[[spatial.maps[k]]])
                   
                   if(sum(unlist(sane))<7) {
                     fitted[[spatial.maps[k]]] <- sdmTMB(
                       clap.prop ~ 1, 
                       data = tmp.clap,
-                      family = nbinom1(link="log"),
+                      family = poisson(link="log"),
                       mesh = mesh,
                       spatial = "on")
                     
                     sane <- sanity(fitted[[spatial.maps[k]]])
                     
-                    if(sum(unlist(sane))<7 & (sane$hessian_ok ==F | sane$eigen_values_ok==F)) {stop(paste0("sanity check failed for all three families attempted (Clap-spatial, ", banks[i],"). I did my best, so now it's time to ask Dave."))}
+                    if(sum(unlist(sane))<7) {
+                      fitted[[spatial.maps[k]]] <- sdmTMB(
+                        clap.prop ~ 1, 
+                        data = tmp.clap,
+                        family = nbinom1(link="log"),
+                        mesh = mesh,
+                        spatial = "on")
+                      
+                      sane <- sanity(fitted[[spatial.maps[k]]])
+                      
+                      if(sum(unlist(sane))<7 & (sane$hessian_ok ==F | sane$eigen_values_ok==F)) {stop(paste0("sanity check failed for all three families attempted (Clap-spatial, ", banks[i],"). I did my best, so now it's time to ask Dave."))}
+                    }
                   }
-                } 
+                }
+                
+                if(spatial.maps[k] =="Clap-abund-spatial") {
+                  
+                  print('Clap-abund-spatial')
+                  
+                  fitted[[spatial.maps[k]]] <- sdmTMB(
+                    tot ~ 1, 
+                    data = tmp.clap,
+                    family = poisson(link="log"),
+                    mesh = mesh,
+                    spatial = "on")
+                  
+                  sane <- sanity( fitted[[spatial.maps[k]]])
+                  
+                  if(sum(unlist(sane))<7) {
+                    fitted[[spatial.maps[k]]] <- sdmTMB(
+                      tot ~ 1, 
+                      data = tmp.clap,
+                      family = tweedie(link="log"),
+                      mesh = mesh,
+                      spatial = "on")
+                    
+                    sane <- sanity(fitted[[spatial.maps[k]]])
+                    
+                    if(sum(unlist(sane))<7) {
+                      fitted[[spatial.maps[k]]] <- sdmTMB(
+                        tot ~ 1, 
+                        data = tmp.clap,
+                        family = nbinom1(link="log"),
+                        mesh = mesh,
+                        spatial = "on")
+                      
+                      sane <- sanity( fitted[[spatial.maps[k]]])
+                      
+                      if(sum(unlist(sane))<7 & (sane$hessian_ok ==F | sane$eigen_values_ok==F)) {stop(paste0("sanity check failed for all three families attempted (Clap-abund-spatial, ", banks[i],"). I did my best, so now it's time to ask Dave."))}
+                    }
+                  }
+                }
                 
                 # # Beta transform
                 # tmp.clap$clap.prop <- beta.transform(tmp.clap$clap.prop/100)
@@ -1057,7 +1104,7 @@ for(fun in funs)
                 # 
                 # fitted[[spatial.maps[k]]] <- data.frame(fitted = mod$summary.fitted.values$mean[1:length(tmp.clap$clap.prop)],
                 #                                         dat=tmp.clap$clap.prop)
-              } # end if(spatial.maps[k] == "Clap-spatial")  
+              } # end if(spatial.maps[k] == "Clap-spatial", "Clap-abund-spatial")  
               
               if(spatial.maps[k] %in% c("MW-spatial", "SH-spatial", "MW.GP-spatial", "SH.GP-spatial"))    
               {
@@ -1113,17 +1160,17 @@ for(fun in funs)
                 # fitted[[spatial.maps[k]]] <- data.frame(fitted = mod$summary.fitted.values$mean[1:length(tmp.gp$cur.mw)],
                 #                                         dat= tmp.gp$cur.mw)
               } # end if(spatial.maps[k] %in% c("MW-spatial", "SH-spatial", "MW.GP-spatial", "SH.GP-spatial"))  
-                bbox <- st_bbox(bound.poly.surv.sf)
-                res <- 0.2
-                if(s.res[1]==25) res<-1
-                newdata <- expand.grid(X=seq(floor(bbox$xmin/1000), ceiling(bbox$xmax/1000), res), Y=seq(floor(bbox$ymin/1000), ceiling(bbox$ymax/1000), 0.2))
-                mod.res[[spatial.maps[k]]] <- predict(fitted[[spatial.maps[k]]], newdata=newdata, type="response", se.fit=T)
-                
-                if(spatial.maps[k]=="Clap-spatial" & fitted[[spatial.maps[k]]]$family[[1]]=="binomial") mod.res[[spatial.maps[k]]]$est <- mod.res[[spatial.maps[k]]]$est*100
-                mod.res[[spatial.maps[k]]]$X <-  mod.res[[spatial.maps[k]]]$X*1000
-                mod.res[[spatial.maps[k]]]$Y <-  mod.res[[spatial.maps[k]]]$Y*1000
-                # mod.res[[spatial.maps[k]]] <- 
-                #   exp(mod$summary.random$s$mean + mod$summary.fixed$mean)
+              bbox <- st_bbox(bound.poly.surv.sf)
+              res <- 0.2
+              if(s.res[1]==25) res<-1
+              newdata <- expand.grid(X=seq(floor(bbox$xmin/1000), ceiling(bbox$xmax/1000), res), Y=seq(floor(bbox$ymin/1000), ceiling(bbox$ymax/1000), res))
+              mod.res[[spatial.maps[k]]] <- predict(fitted[[spatial.maps[k]]], newdata=newdata, type="response", se.fit=T)
+              
+              if(spatial.maps[k] %in% c("Clap-spatial") & fitted[[spatial.maps[k]]]$family[[1]]=="binomial") mod.res[[spatial.maps[k]]]$est <- mod.res[[spatial.maps[k]]]$est*100
+              mod.res[[spatial.maps[k]]]$X <-  mod.res[[spatial.maps[k]]]$X*1000
+              mod.res[[spatial.maps[k]]]$Y <-  mod.res[[spatial.maps[k]]]$Y*1000
+              # mod.res[[spatial.maps[k]]] <- 
+              #   exp(mod$summary.random$s$mean + mod$summary.fixed$mean)
               
               # print a message if the model didn't work:
               if(max(mod.res[[spatial.maps[k]]]$est, na.rm=T) == "Inf") stop(paste0("Inf predictions in mod.res[[spatial.maps[k]]]. Please try a different mesh for ", banks[i], " ", spatial.maps[k], ".\nRecommend changing inla.mesh.2d max.edge argument very slightly."))
@@ -1456,6 +1503,17 @@ for(fun in funs)
               leg.title <- "% Dead"
             } # end if(maps.to.make[m]  %in% c("Clap-spatial")
             
+            if(maps.to.make[m]  %in% c("Clap-abund-spatial"))
+            {
+              base.lvls=c(0,1,5,10,50,100,500,1000,2000,5000,10000,20000,50000,100000)
+              cols <- rev(viridis::plasma(length(base.lvls)-1,alpha=0.7))
+              fig.title <- substitute(bold(paste("Total clapper abundance (", bank,"-",year,")",sep="")),
+                                      list(b=as.character(RS),year=as.character(yr),bank=banks[i]))
+              if(banks[i] == "GB") fig.title <- substitute(bold(paste("Total clapper abundance (" , bank,"-Spr-",year,")",sep="")),
+                                                           list(b=as.character(RS),year=as.character(yr),bank=banks[i]))
+              
+              leg.title <- "Number"
+            } # end if(maps.to.make[m]  %in% c("Clap-spatial")
             
             if(maps.to.make[m]  %in% c("MW-spatial"))   
             {
@@ -1570,25 +1628,46 @@ for(fun in funs)
             #   load(paste0(direct,"Data/Survey_data/",yr,"/Survey_summary_output/",banks[i],"/",maps.to.make[m],".Rdata"))
             # }
             #
-            
+            #browser()
             # Here we add our layer to the object above.  This is going to become a list so we can save it and modify it outside Figures.
             if(!is.null(mod.res[[maps.to.make[m]]])){
-              p2 <- pecjector(gg.obj = p, 
-                              area = banks[i],
-                              legend=T,
-                              plot=F,
-                              repo = direct_fns, 
-                              c_sys = st_crs(loc.sf)$epsg,
-                              add_inla= list(field = mod.res[[maps.to.make[m]]],
-                                             mesh = mesh,
-                                             dims=s.res,
-                                             clip = bound.poly.surv.sf,
-                                             scale = list(scale = "discrete",
-                                                          breaks = base.lvls,
-                                                          palette = cols,
-                                                          #leg.name=leg.title,
-                                                          alpha=0.75))) +
-                geom_sf(data=bound.poly.surv.sf, colour="black", fill=NA) + coord_sf(expand=F)
+              if(banks[i] %in% c("GBa", "GBb")) {
+                p2 <- pecjector(gg.obj = p, 
+                                area = banks[i],
+                                legend=T,
+                                plot=F,
+                                repo = direct_fns, 
+                                c_sys = st_crs(loc.sf)$epsg,
+                                add_inla= list(field = mod.res[[maps.to.make[m]]],
+                                               mesh = mesh,
+                                               dims = s.res,
+                                               clip = bound.poly.surv.sf,
+                                               scale = list(scale = "discrete",
+                                                            breaks = base.lvls,
+                                                            palette = cols,
+                                                            lims = c(floor(min(mod.res[[maps.to.make[m]]]$est)), ceiling(max(mod.res[[maps.to.make[m]]]$est))),
+                                                            #leg.name=leg.title,
+                                                            alpha=0.75))) +
+                  geom_sf(data=bound.poly.surv.sf, colour="black", fill=NA) + coord_sf(expand=F)
+              }
+              if(!banks[i] %in% c("GBa", "GBb")) {
+                p2 <- pecjector(gg.obj = p, 
+                                area = banks[i],
+                                legend=T,
+                                plot=F,
+                                repo = direct_fns, 
+                                c_sys = st_crs(loc.sf)$epsg,
+                                add_inla= list(field = mod.res[[maps.to.make[m]]],
+                                               mesh = mesh,
+                                               dims=s.res,
+                                               clip = bound.poly.surv.sf,
+                                               scale = list(scale = "discrete",
+                                                            breaks = base.lvls,
+                                                            palette = cols,
+                                                            #leg.name=leg.title,
+                                                            alpha=0.75))) +
+                  geom_sf(data=bound.poly.surv.sf, colour="black", fill=NA) + coord_sf(expand=F)
+              }
             }
             if(is.null(mod.res[[maps.to.make[m]]])){
               p2 <- pecjector(gg.obj = p, 
@@ -1612,7 +1691,7 @@ for(fun in funs)
             ############  Add the points and the legend to the figure############  Add the points and the legend to the figure
             # Add the regular survey tows, note this if statement is used to NOT add the following code to these plots...
      
-            if(maps.to.make[m] %in% c("PR-spatial", "Rec-spatial", "FR-spatial",bin.names, "SH-spatial", "SH.GP-spatial","Clap-spatial"))
+            if(maps.to.make[m] %in% c("PR-spatial", "Rec-spatial", "FR-spatial",bin.names, "SH-spatial", "SH.GP-spatial","Clap-spatial", "Clap-abund-spatial"))
             {
              surv <- st_as_sf(surv.Live[[banks[i]]],coords = c('slon','slat'),crs = 4326,remove=F) %>% 
                 dplyr::filter(year == yr & state == 'live')
@@ -1631,30 +1710,14 @@ for(fun in funs)
               p3 <- p2 + geom_sf(data=surv,aes(shape=`Tow type`),size=2) + scale_shape_manual(values = shp) + coord_sf(expand=F) +
                 theme(legend.key = element_rect(fill=NA))
             }
-      
+            
             if(maps.to.make[m] %in% c("MW.GP-spatial","MW-spatial","CF-spatial","MC-spatial"))
             {
-              if(banks[i]=="GBa") {
-                surv <- st_as_sf(CF.current[[banks[i]]],coords = c('lon','lat'),crs = 4326)
-                surv <- st_transform(surv,crs = st_crs(loc.sf)$epsg)
-                surv$`Tow type` <- paste0('detailed (n = ',nrow(surv),")")
-                surv$shp<-21
-              }
-              if(!banks[i]=="GBa"){
-                surv <- st_as_sf(surv.Live[[banks[i]]],coords = c('slon','slat'),crs = 4326,remove=F) %>% 
-                  dplyr::filter(year == yr & state == 'live')
-                surv <- st_transform(surv,crs = st_crs(loc.sf)$epsg)
-                surv$`Tow type` <- paste0('regular (n = ',length(surv$random[surv$random==1]),")")
-                if(banks[i] != 'Ger') surv$`Tow type`[surv$random != 1] <- paste0('exploratory (n = ',length(surv$random[surv$random!=1]),")")
-                if(banks[i] == 'Ger') surv$`Tow type`[!surv$random %in% c(1,3)] <- paste0('exploratory (n = ',length(surv$random[!surv$random %in% c(1,3)]),")")
-                if(banks[i] == 'Ger') surv$`Tow type`[surv$random == 3] <- paste0('repeated (n = ',length(surv$random[surv$random==3]),")")
-                # Get the shapes for symbols we want, this should do what we want for all cases we've ever experienced...
-                if(length(unique(surv$`Tow type`)) ==1) shp <- 21
-                if(length(unique(surv$`Tow type`)) ==2) shp <- c(17,21)
-                if(length(unique(surv$`Tow type`)) ==3) shp <- c(17,21,15)
-                if(banks[i] == "Ger" & length(shp) == 2) shp <- c(21,15)
-              }
-              p3 <- p2 + geom_sf(data=surv,aes(shape=`Tow type`),size=2) + scale_shape_manual(values = shp) + coord_sf(expand=F) +
+              detailed_tows <- unique(mw[[banks[i]]][mw[[banks[i]]]$year==yr,]$tow)
+              surv <- st_as_sf(CF.current[[banks[i]]][CF.current[[banks[i]]]$tow %in% detailed_tows,],coords = c('lon','lat'),crs = 4326)
+              surv <- st_transform(surv,crs = st_crs(loc.sf)$epsg)
+              surv$`Tow type` <- paste0('detailed (n = ',nrow(surv),")")
+              p3 <- p2 + geom_sf(data=surv,aes(shape=`Tow type`),size=2) + scale_shape_manual(values = 21) + coord_sf(expand=F) +
                 theme(legend.key = element_rect(fill=NA))
             }
             
@@ -1707,9 +1770,17 @@ for(fun in funs)
       }
       
       if(!banks[i] %in% spat.name) {
-        p <- pecjector(area = banks[i],plot = F,repo = direct_fns,
-                     add_layer = list(eez = 'eez' , sfa = 'offshore',bathy = bathy,scale.bar = scale.bar)) +
+        p <- pecjector(area = banks[i], plot = F, repo = direct_fns,
+                     add_layer = list(eez = 'eez' , sfa = 'offshore',bathy = bathy, scale.bar = scale.bar)) +
         coord_sf(expand=F)
+      }
+      #print(p)
+      
+      if(banks[i] == "Mid") {
+        p <- pecjector(area = banks[i], plot = F, repo = direct_fns,
+                       add_layer = list(eez = 'eez' , sfa = 'offshore',bathy = bathy, scale.bar = scale.bar)) +
+          coord_sf(expand=F)
+        bathy_mid <- p$layers[[2]]$data
       }
       #print(p)
       
@@ -1760,7 +1831,7 @@ for(fun in funs)
       }
 
       # That's all we need for the areas without survey strata, pretty easy! No fill on strata
-      if(banks[i] %in% c("SPB","Ban", "BanIce","Ger", "Mid"))
+      if(banks[i] %in% c("SPB","Ban", "BanIce","Ger"))
       {
         p2 <- p + #geom_sf(data=shpf,fill =NA) + 
           geom_sf(data=surv,aes(shape=`Tow type`, fill=`Tow type`), stroke=1.1) + 
@@ -1770,7 +1841,21 @@ for(fun in funs)
                 legend.key = element_rect(fill = NA),
                 legend.justification = 'left',legend.key.size = unit(.5,"line")) 
       }
-      
+
+if(banks[i] %in% c("Mid"))
+{
+  p2 <- p + 
+    geom_contour(data=bathy_mid, aes(x, y, z = layer, colour="-50 m"), breaks=seq(0,-200,-50)) + theme(legend.position = "right") +
+    scale_colour_manual(values="lightblue4", name="Bathymetry") +
+    geom_sf(data=surv,aes(shape=`Tow type`, fill=`Tow type`), stroke=1.1) + 
+    scale_shape_manual(values = shp) +
+    scale_fill_manual(values = ptcol) +
+    theme(legend.position = 'right',legend.direction = 'vertical',
+          legend.key = element_rect(fill = NA),
+          legend.justification = 'left',legend.key.size = unit(.5,"line"))
+}
+
+
       if(banks[i] == "GB")
       {
         p2 <- p + geom_sf(data=surv,aes(shape=`Tow type`, fill=`Tow type`), stroke=1.1) + 
@@ -1877,7 +1962,6 @@ for(fun in funs)
       cap.size <- ifelse(banks[i] == "BanIce",1.9,2)
   
       ############
-
       #Source12 Meat Height Shell weight plot on Slide 13  source("fn/shwt.plt1.r") 
       if(layout=="portrait"){
         if(fig == "screen") windows(8,13)
@@ -1893,7 +1977,7 @@ for(fun in funs)
         if(fig == "pdf") pdf(paste(plot.dir,"/MWSH_and_CF_ts_wide.pdf",sep=""),width = 13,height = 8.5)
       }
       
-      if(layout=="portrait") par(mfrow=c(2,1))
+      if(layout=="portrait") par(mfrow=c(2,1), omi=c(0.3,0.6,0.3,0.2))
       if(layout=="landscape") par(mfrow=c(1,2))
 
         if(banks[i] %in% c("GBa", "GB") | banks[i] %in% spat.name) shwt.plt1(SpatHtWt.fit[[banks[i]]],lw=3,ht=10,wd=12,cx=1.5,titl = MWSH.title,cex.mn = cap.size,las=1)
@@ -2085,7 +2169,7 @@ for(fun in funs)
       if(add.title == F) survey.ts.N.title <- ""
       if(fig == "screen") windows(8.5,11)
       
-      if(fig == "png")png(paste(plot.dir,"/abundance_ts_total.png",sep=""),units="in",
+      if(fig == "png")png(paste(plot.dir,"/abundance_ts.png",sep=""),units="in",
                           width = 8.5, height = 11,res=420,bg="transparent")
       if(fig == "pdf") pdf(paste(plot.dir,"/abundance_ts.pdf",sep=""),width = 8.5, height = 11)
       
@@ -2184,7 +2268,7 @@ for(fun in funs)
         subarea_abund_cv <- melt(subarea_df[subarea_df$year==yr, c("subarea", "N.cv", "NPR.cv", "NR.cv")], id.vars="subarea", variable.name = "CV")
         subarea_abund_cv$variable <- gsub(x=subarea_abund_cv$CV, ".cv", "")
         subarea_abund_cv$CV <- subarea_abund_cv$value
-        subarea_abund <- join(subarea_abund, subarea_abund_cv[,c("subarea","variable", "CV")], type="full")
+        subarea_abund <- plyr::join(subarea_abund, subarea_abund_cv[,c("subarea","variable", "CV")], type="full")
         subarea_abund$variable <- factor(subarea_abund$variable, levels=c("NPR", "NR", "N"))
         levels(subarea_abund$variable) <- c("Pre-recruits", "Recruits", "Fully-recruited")
         subarea_abund$subarea <- factor(subarea_abund$subarea, levels = c("GBa-North", "GBa-South", "GBa-West", "GBa-Central", "GBa-East"))
@@ -2303,7 +2387,7 @@ for(fun in funs)
         subarea_biomass_cv <- melt(subarea_df[subarea_df$year==yr, c("subarea", "I.cv", "IPR.cv", "IR.cv")], id.vars="subarea", variable.name = "CV")
         subarea_biomass_cv$variable <- gsub(x=subarea_biomass_cv$CV, ".cv", "")
         subarea_biomass_cv$CV <- subarea_biomass_cv$value
-        subarea_biomass <- join(subarea_biomass, subarea_biomass_cv[,c("subarea","variable", "CV")], type="full")
+        subarea_biomass <- plyr::join(subarea_biomass, subarea_biomass_cv[,c("subarea","variable", "CV")], type="full")
         subarea_biomass$variable <- factor(subarea_biomass$variable, levels=c("IPR", "IR", "I"))
         levels(subarea_biomass$variable) <- c("Pre-recruits", "Recruits", "Fully-recruited")
         subarea_biomass$subarea <- factor(subarea_biomass$subarea, levels = c("GBa-North", "GBa-South", "GBa-West", "GBa-Central", "GBa-East"))
@@ -2427,7 +2511,7 @@ for(fun in funs)
     ##### Shell height frequency figure            ##### Shell height frequency figure ##### Shell height frequency figure
     ##### Shell height frequency figure            ##### Shell height frequency figure ##### Shell height frequency figure      
     ##### Shell height frequency figure            ##### Shell height frequency figure ##### Shell height frequency figure
-    
+
     if(any(plots=="SHF"))
     {
       SHF.title <-  substitute(bold(paste("Shell height frequency (",bank,")",sep="")),
@@ -2449,7 +2533,8 @@ for(fun in funs)
           shf.years <- survey.obj[[banks[i]]][[1]]$year[(length(survey.obj[[banks[i]]][[1]]$year)-6):
                                                           length(survey.obj[[banks[i]]][[1]]$year)]
           s.size <- survey.obj[[banks[i]]][[1]]$n[survey.obj[[banks[i]]][[1]]$year %in% shf.years]
-          shf.plt(survey.obj[[banks[i]]],from='surv',yr=shf.years, col1='grey80',col2=1,rel=F,
+          
+          shf.plt(survey.obj[[banks[i]]],from='surv',yr=shf.years, col1='grey80',col2=1,rel=F,#ymax = 100,
                   recline=c(RS,CS),add.title = T,titl = SHF.title,cex.mn=3,sample.size = T)	
           if(fig != "screen") dev.off()
         }
@@ -2775,7 +2860,7 @@ for(fun in funs)
       subarea_abund_cv <- melt(subarea_df[subarea_df$year==yr, c("subarea", "N.cv", "NPR.cv", "NR.cv")], id.vars="subarea", variable.name = "CV")
       subarea_abund_cv$variable <- gsub(x=subarea_abund_cv$CV, ".cv", "")
       subarea_abund_cv$CV <- subarea_abund_cv$value
-      subarea_abund <- join(subarea_abund, subarea_abund_cv[,c("subarea","variable", "CV")], type="full")
+      subarea_abund <- plyr::join(subarea_abund, subarea_abund_cv[,c("subarea","variable", "CV")], type="full")
       subarea_abund$variable <- factor(subarea_abund$variable, levels=c("NPR", "NR", "N"))
       levels(subarea_abund$variable) <- c("Pre-recruits", "Recruits", "Fully-recruited")
       subarea_abund$subarea <- factor(subarea_abund$subarea, levels = c("GBa-North", "GBa-South", "GBa-West", "GBa-Central", "GBa-East"))
@@ -2930,7 +3015,7 @@ for(fun in funs)
       if(banks[i] == "GB")  sb <- subset(seedboxes,Bank %in% c("GBa","GBb") & Closed < paste(yr,"-11-01",sep="") & Open >= paste(yr,"-01-01",sep=""))
       if(nrow(sb) > 0) # only run the rest of this if we have data...
       {
-        seed.spatial.plots <- c("PR-spatial","Rec-spatial","FR-spatial","CF-spatial","MC-spatial","Clap-spatial")
+        seed.spatial.plots <- c("PR-spatial","Rec-spatial","FR-spatial","CF-spatial","MC-spatial","Clap-spatial", "Clap-abund-spatial")
         bound.poly.surv <- subset(survey.bound.polys,label==banks[i]) 
         attr(bound.poly.surv,"projection")<-"LL"
         n.box <- length(seedbox.obj[[banks[i]]])

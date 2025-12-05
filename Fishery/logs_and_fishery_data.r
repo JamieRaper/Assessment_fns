@@ -316,14 +316,15 @@ for(fun in funs)
           
           log1 <- do.call("rbind",log.lst)
           slip1 <- do.call("rbind",slip.lst)
-
+ 
           # This removes columns/variables we do not need.
           slip <- with(slip1, data.frame(mdid = MON_DOC_ID, ves = VESSEL_NAME, vrnum = VR_NUMBER, tripnum = TRIP_ID, 
                                          sail = as.Date(DATE_SAILED,format="%d-%b-%y"), 
                                          land = as.Date(LANDING_DATE_TIME,format="%d-%b-%y"), 
                                          gear.ft = GEAR_SIZE_FEET, numshuck = NUM_OF_CREW_SHUCKING, numcrew = NUM_OF_CREW, 
                                          weight = SLIP_WEIGHT_LBS, grade = FISH_GRADE,stringsAsFactors = F,
-                                         licence = LICENCE_ID))
+                                         licence = LICENCE_ID,
+                                         company=EA_COMPANY))
           
           # This removes columns/variables we do not need.
           log <- with(log1, data.frame(mdid = MON_DOC_ID, ves = VESSEL_NAME,vrnum = VR_NUMBER, tripnum = TRIP_ID, 
@@ -611,7 +612,7 @@ for(fun in funs)
               slip.lst[[i]] <- ScallopQuery(package=db.lib, un=un, pw=pw, db.con=db.con, SQLtext= qu.slip)
               
               #odbcCloseAll()  # close the database connection.
-              
+
               # Send each year to a flat file in the Raw_MARFIS folder
               # if we are extracting data from the current year include the date so we know how current the data are.
               if(ex.marfis ==T)
@@ -631,12 +632,14 @@ for(fun in funs)
                 if(yr[i] == current.year)
                   {
                     #Write3
-                    write.table(log.lst[[i]], file = paste(direct.off,"Data/Fishery_data/Logs/MARFIS//MARFIS_log_up_to",
-                                                           max(log.lst[[i]]$DATE_FISHED,na.rm=T), ".csv",sep=""),
+                  lab <- gsub(x = max(log.lst[[i]]$DATE_FISHED,na.rm=T), pattern=":", replacement="", fixed=T)
+                  write.table(log.lst[[i]], file = paste(direct.off,"Data/Fishery_data/Logs/MARFIS/MARFIS_log_up_to",
+                                                           lab, ".csv",sep=""),
                                                            sep=",",row.names=F,col.names=T)
                     #Write4
+                  lab <- gsub(x = max(slip.lst[[i]]$DATE_FISHED,na.rm=T), pattern=":", replacement="", fixed=T)
                     write.table(slip.lst[[i]], file = paste(direct.off,"Data/Fishery_data/Slips/MARFIS/MARIFS_slip_up_to",
-                                                            max(slip.lst[[i]]$DATE_SAILED,na.rm=T),".csv",sep=""),
+                                                           lab,".csv",sep=""),
                                                             sep=",", row.names=F,col.names=T)
                   } # END if(yr[i] != current.year)   
                 } # end if(ex.marfis==T)
